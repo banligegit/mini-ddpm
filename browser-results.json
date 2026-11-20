@@ -1,0 +1,135 @@
+{
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "adapter": "",
+  "vendor": "nvidia",
+  "architecture": "lovelace",
+  "modes": {
+    "unconditional": {
+      "loadMs": 507.80000001192093,
+      "eps": {
+        "mean": 3.057224863109046e-07,
+        "max": 2.384185791015625e-06
+      },
+      "steps": {
+        "10": {
+          "ms": 77.09999996423721,
+          "tensor": {
+            "mean": 9.829373269969104e-07,
+            "max": 2.5451183319091797e-05
+          },
+          "pixel": {
+            "mean": 0,
+            "max": 0
+          },
+          "changedPixels": 0
+        },
+        "20": {
+          "ms": 136.89999997615814,
+          "tensor": {
+            "mean": 1.1092319143745972e-06,
+            "max": 5.2168965339660645e-05
+          },
+          "pixel": {
+            "mean": 0,
+            "max": 0
+          },
+          "changedPixels": 0
+        },
+        "50": {
+          "ms": 339.5999999642372,
+          "tensor": {
+            "mean": 2.2682456337675755e-07,
+            "max": 4.589557647705078e-06
+          },
+          "pixel": {
+            "mean": 0,
+            "max": 0
+          },
+          "changedPixels": 0
+        },
+        "200": {
+          "ms": 1378.1000000238419,
+          "tensor": {
+            "mean": 2.8566449015800443e-07,
+            "max": 5.513429641723633e-06
+          },
+          "pixel": {
+            "mean": 0,
+            "max": 0
+          },
+          "changedPixels": 0
+        }
+      }
+    },
+    "conditional": {
+      "loadMs": 52.10000002384186,
+      "eps": {
+        "mean": 2.9129222063917897e-07,
+        "max": 2.1457672119140625e-06
+      },
+      "steps": {
+        "10": {
+          "ms": 63.10000002384186,
+          "tensor": {
+            "mean": 6.82239075029763e-07,
+            "max": 1.998990774154663e-05
+          },
+          "pixel": {
+            "mean": 0,
+            "max": 0
+          },
+          "changedPixels": 0
+        },
+        "20": {
+          "ms": 151.0999999642372,
+          "tensor": {
+            "mean": 3.241335174867085e-07,
+            "max": 1.2725591659545898e-05
+          },
+          "pixel": {
+            "mean": 0,
+            "max": 0
+          },
+          "changedPixels": 0
+        },
+        "50": {
+          "ms": 361.60000002384186,
+          "tensor": {
+            "mean": 1.313735027702487e-07,
+            "max": 1.6689300537109375e-06
+          },
+          "pixel": {
+            "mean": 0,
+            "max": 0
+          },
+          "changedPixels": 0
+        },
+        "200": {
+          "ms": 1403.699999988079,
+          "tensor": {
+            "mean": 2.4378793884296806e-07,
+            "max": 7.12275505065918e-06
+          },
+          "pixel": {
+            "mean": 0,
+            "max": 0
+          },
+          "changedPixels": 0
+        }
+      }
+    }
+  },
+  "sameSeed": {
+    "mean": 0,
+    "max": 0
+  },
+  "otherSeed": {
+    "mean": 0.224765204130173,
+    "max": 1.9708788394927979
+  },
+  "browser_version": "157.0.8103.51",
+  "page_origin": "localhost",
+  "ui": "首次模型加载 0.05 秒 · 本次生成 0.07 秒",
+  "webgpu": true,
+  "unsupported": "当前浏览器没有 WebGPU 接口。请使用 Chrome 或 Edge，检查硬件加速设置。"
+}
