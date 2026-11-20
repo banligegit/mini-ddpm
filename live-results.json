@@ -1,0 +1,9 @@
+{
+  "url": "https://banligegit.github.io/mini-ddpm/",
+  "status": 200,
+  "browser": "157.0.8103.51",
+  "measurements": {
+    "conditional": "首次模型加载 17.87 秒 · 本次生成 0.86 秒",
+    "unconditional": "首次模型加载 8.86 秒 · 本次生成 0.13 秒"
+  }
+}
