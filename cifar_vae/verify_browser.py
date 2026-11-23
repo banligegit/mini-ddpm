@@ -33,20 +33,44 @@ def main():
         page.locator("#recon-form button:enabled").wait_for()
         with urllib.request.urlopen(urllib.parse.urljoin(base, "results.json"), timeout=30) as stream:
             results = json.load(stream)
-        maximum = {16: 0, 8: 0}
-        for sample in results["samples"]:
-            idx = sample["index"]
-            page.select_option("#sample", str(idx))
-            page.locator("#recon-form button").click()
-            page.wait_for_function("document.querySelector('#status').textContent.includes('浏览器重建完成') || document.querySelector('#status').textContent.includes('本次推理未完成')")
-            assert "浏览器重建完成" in page.locator("#status").inner_text(), page.locator("#status").inner_text()
-            for side in (16, 8):
-                actual = png_array(page.locator(f"#recon{side}").get_attribute("src"))
-                path = urllib.parse.urljoin(base, f"samples/{idx}-recon{side}.png")
-                with urllib.request.urlopen(path, timeout=30) as stream:
-                    ref = np.asarray(Image.open(io.BytesIO(stream.read())).convert("RGB"), dtype=np.int16)
-                maximum[side] = max(maximum[side], int(np.abs(ref - actual).max()))
+        assert page.locator("#sample").input_value() == "11"
+        assert page.locator("#latent-size").input_value() == "16"
+        maximum = {}
+        for side in (16, 8):
+            page.select_option("#latent-size", str(side))
+            for sample in results["samples"]:
+                idx = sample["index"]
+                page.select_option("#sample", str(idx))
+                page.locator("#recon-form button").click()
+                page.wait_for_function("document.querySelector('#status').textContent.includes('浏览器重建完成') || document.querySelector('#status').textContent.includes('本次推理未完成')")
+                assert "浏览器重建完成" in page.locator("#status").inner_text(), page.locator("#status").inner_text()
+                xy = page.locator("#crop-coordinates").inner_text().split("(")[1].rstrip(")")
+                x, y = map(int, xy.split(","))
+                for version, prefix in (("baseline", "recon"), ("optimized", "detail")):
+                    actual = png_array(page.locator("#" + version).get_attribute("src"))
+                    url_img = urllib.parse.urljoin(base, f"samples/{idx}-{prefix}{side}.png")
+                    with urllib.request.urlopen(url_img, timeout=30) as stream:
+                        ref = np.asarray(Image.open(io.BytesIO(stream.read())).convert("RGB"), dtype=np.int16)
+                    key = f"{version}{side}"
+                    maximum[key] = max(maximum.get(key, 0), int(np.abs(ref - actual).max()))
+                    cropped = png_array(page.locator("#zoom-" + version).evaluate("el=>el.toDataURL()"))
+                    assert np.array_equal(cropped, actual[y:y+12,x:x+12]), (idx,side,version)
         assert max(maximum.values()) <= 1, maximum
+        for version, prefix in (("baseline", "recon"), ("optimized", "detail")):
+            page.select_option("#latent-size", "both-" + version)
+            page.locator("#recon-form button").click()
+            page.wait_for_function("document.querySelector('#status').textContent.includes('浏览器重建完成')")
+            for slot, side in (("baseline", 16), ("optimized", 8)):
+                shown = png_array(page.locator("#" + slot).get_attribute("src"))
+                reference = urllib.parse.urljoin(base, f"samples/{idx}-{prefix}{side}.png")
+                with urllib.request.urlopen(reference, timeout=30) as stream:
+                    ref = np.asarray(Image.open(io.BytesIO(stream.read())).convert("RGB"), dtype=np.int16)
+                assert np.abs(shown - ref).max() <= 1
+        crop_button = page.locator("#crop-source")
+        crop_button.click(position={"x": 1, "y": 1})
+        assert "(0, 0)" in page.locator("#crop-coordinates").inner_text()
+        crop_button.press("ArrowRight")
+        assert "(1, 0)" in page.locator("#crop-coordinates").inner_text()
         page.locator("#choose-prior").click()
         page.locator("#prior8:visible").wait_for()
         def image_pair():
@@ -62,9 +86,11 @@ def main():
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         page.locator("#choose-recon").click()
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        assert page.locator("#metrics tr").count() == 4
         assert not errors, errors
         print(json.dumps({"url": url, "browser": browser.version, "samples": len(results["samples"]),
-                          "max_rgb_error_uint8": maximum, "seed_repeat": True, "mobile_layout": True}))
+                          "max_rgb_error_uint8": maximum, "synchronized_crops": True, "cross_size": True,
+                          "seed_repeat": True, "mobile_layout": True}))
         browser.close()
 
 

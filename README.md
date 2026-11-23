@@ -4,13 +4,15 @@
 
 ## CIFAR-10 卷积 VAE
 
-[题目五在线实验](https://banligegit.github.io/mini-ddpm/cifar-vae/)展示同一测试图的两种确定性重建，并支持从标准正态分布采样。模型在浏览器内用 ONNX Runtime Web 的 WASM 后端推理。测试图按类别各取官方测试集首张；整套测试集的 PSNR、SSIM 来自对 10,000 张图的评估。
+[题目五在线实验](https://banligegit.github.io/mini-ddpm/cifar-vae/)默认展示卡车原图及两份 16×16×4 权重的确定性重建。可切换至 8×8×4，或点击原图移动三列同步的 12×12 像素放大框。先验页保留两份原始解码器的标准正态采样。各模型在浏览器内用 ONNX Runtime Web 的 WASM 后端推理。测试图按类别各取官方测试集首张，表中指标是 10,000 张测试图的均值。
 
 从页面下载实验提交包。解压后在包含 `model.py` 的目录安装 `onnx`、`onnxruntime` 及提交包中的依赖，执行下列命令可更新本仓库的网页模型、测试图和指标；将路径参数替换为实际检出位置。重新导出前，数据目录应已有官方 CIFAR-10，或可联网首次下载。
 
 ```sh
 python export_web.py --output /path/to/mini-ddpm/site/cifar-vae
 ```
+
+从页面下载细节优化实验包，将其中的 `detail/` 放在上述训练项目根目录。导出优化版需先保留原版 JSON 和原图，再运行 `python detail/export_detail_web.py --output /path/to/mini-ddpm/site/cifar-vae`。导出脚本核验选定权重的 SHA-256，并将 ONNX 数值与 PyTorch 输出对照。
 
 从本仓库根目录运行 `npx --yes http-server site -p 8080`，打开 `http://localhost:8080/cifar-vae/`。安装 Chrome、NumPy、Pillow 和 Python Playwright 后，`python cifar_vae/verify_browser.py http://localhost:8080/cifar-vae/` 可核对十张样例、同种子复现和移动布局。
 
