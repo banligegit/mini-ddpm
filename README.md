@@ -4,7 +4,9 @@
 
 ## CIFAR-10 卷积 VAE
 
-[题目五在线实验](https://banligegit.github.io/mini-ddpm/cifar-vae/)默认展示卡车原图、上轮 60 轮模型与本轮论文实验选定模型的 16×16×4 确定性重建。可切换至 8×8×4、查看首版与上轮，或在同一版本中对照两种尺寸。点击原图可移动三列同步的 12×12 像素放大框。先验页保留两份原始解码器的标准正态采样。各模型在浏览器内用 ONNX Runtime Web 的 WASM 后端推理。测试图按类别各取官方测试集首张，表中指标是 10,000 张测试图的均值。
+[题目五在线实验](https://banligegit.github.io/mini-ddpm/cifar-vae/#comparison)默认展示卡车原图、上轮论文版与本轮验证集选定模型的 16×16×4 确定性重建。可以切换至 8×8×4、查看往轮版本，或同版对照两种尺寸。点击原图可移动三列同步的 12×12 像素放大框。样例按类别取官方测试集首张。表中指标是 10,000 张测试图的均值。
+
+[先验页](https://banligegit.github.io/mini-ddpm/cifar-vae/#priors)把真实测试集前 32 张照片与两个解码器各自连续 32 张先验样本并排展示，图像之间没有源图对应关系。默认网格来自正式实验的 PyTorch 固定种子。网页可选择四个版本的解码器，用浏览器随机种子另抽一批样本。重建与先验解码均使用 ONNX Runtime Web 的 WASM 后端。
 
 从页面下载实验提交包。解压后在包含 `model.py` 的目录安装 `onnx`、`onnxruntime` 及提交包中的依赖，执行下列命令可更新本仓库的网页模型、测试图和指标；将路径参数替换为实际检出位置。重新导出前，数据目录应已有官方 CIFAR-10，或可联网首次下载。
 
@@ -14,7 +16,7 @@ python export_web.py --output /path/to/mini-ddpm/site/cifar-vae
 
 从页面下载细节优化实验包，将其中的 `detail/` 放在上述训练项目根目录。导出优化版需先保留原版 JSON 和原图，再运行 `python detail/export_detail_web.py --output /path/to/mini-ddpm/site/cifar-vae`。导出脚本核验选定权重的 SHA-256，并将 ONNX 数值与 PyTorch 输出对照。
 
-要导出本轮选定模型，从页面下载论文优化实验包并解压，在包的项目根目录运行 `python paper_detail/export_web_paper.py --output /path/to/mini-ddpm/site/cifar-vae`。网页仓库保留六个模型的比较资料。本轮导出脚本校验最终验证选择、权重摘要，以及十张示例在 ONNX 编码和解码后与 PyTorch 成图的最大绝对误差。
+上轮论文版的导出脚本随论文优化包提供。解压后，在项目根目录运行 `python paper_detail/export_web_paper.py --output /path/to/mini-ddpm/site/cifar-vae`。本轮实验包对应的命令为 `python context_detail/export_context_web.py --output /path/to/mini-ddpm/site/cifar-vae`。脚本校验验证集锁定的权重、正式测试记录和示例原图，并核对十张示例的 ONNX 与 PyTorch 重建误差。网页仓库保留四个版本、两种尺寸的全部模型。
 
 从本仓库根目录运行 `npx --yes http-server site -p 8080`，打开 `http://localhost:8080/cifar-vae/`。安装 Chrome、NumPy、Pillow 和 Python Playwright 后，`python cifar_vae/verify_browser.py http://localhost:8080/cifar-vae/` 可核对十张样例、同种子复现和移动布局。
 

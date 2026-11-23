@@ -42,9 +42,10 @@ def main():
         with urllib.request.urlopen(urllib.parse.urljoin(base, "results.json"), timeout=30) as stream:
             results = json.load(stream)
         assert page.locator("#sample").input_value() == "11"
-        assert page.locator("#latent-size").input_value() == "paper-16"
+        assert page.locator("#latent-size").input_value() == "context-16"
         maximum = {}
-        modes = [("paper-16", 16, ("detail", "paper")), ("paper-8", 8, ("detail", "paper")),
+        modes = [("context-16", 16, ("paper", "context")), ("context-8", 8, ("paper", "context")),
+                 ("paper-16", 16, ("detail", "paper")), ("paper-8", 8, ("detail", "paper")),
                  ("16", 16, ("recon", "detail")), ("8", 8, ("recon", "detail"))]
         for mode, side, prefixes in modes:
             page.select_option("#latent-size", mode)
@@ -64,7 +65,8 @@ def main():
                     cropped = png_array(page.locator("#zoom-" + slot).evaluate("el=>el.toDataURL()"))
                     assert np.array_equal(cropped, actual[y:y+12,x:x+12]), (idx,side,prefix)
         assert max(maximum.values()) <= 1, maximum
-        for version, prefix in (("baseline", "recon"), ("optimized", "detail"), ("paper", "paper")):
+        for version, prefix in (("baseline", "recon"), ("optimized", "detail"), ("paper", "paper"),
+                                ("context", "context")):
             page.select_option("#latent-size", "both-" + version)
             page.locator("#recon-form button").click()
             page.wait_for_function("document.querySelector('#status').textContent.includes('浏览器重建完成')")
@@ -77,6 +79,11 @@ def main():
         crop_button.press("ArrowRight")
         assert "(1, 0)" in page.locator("#crop-coordinates").inner_text()
         page.locator("#choose-prior").click()
+        assert page.locator("#prior-version").input_value() == "context"
+        for img in ("#prior-real", "#fixed-prior16", "#fixed-prior8"):
+            page.locator(img).evaluate("el=>el.decode()")
+            assert page.locator(img).is_visible()
+        page.locator("#prior-form button").click()
         page.locator("#prior8:visible").wait_for()
         def image_pair():
             return [page.locator(f"#prior{s}").evaluate("el => el.toDataURL()") for s in (16, 8)]
@@ -87,15 +94,27 @@ def main():
             page.wait_for_function("s => document.querySelector('#status').textContent.startsWith('种子 '+s+'，')", arg=seed)
             pair = image_pair()
             assert all((a == b) == (seed == 2026) for a, b in zip(first, pair)), seed
+        page.select_option("#prior-version", "baseline")
+        page.wait_for_function("document.querySelector('#status').textContent.includes('首版解码器在本地浏览器生成')")
+        assert all(a != b for a, b in zip(first, image_pair()))
+        assert page.locator("#prior-real").is_visible()
         page.set_viewport_size({"width": 360, "height": 750})
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         page.locator("#choose-recon").click()
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-        assert page.locator("#metrics tr").count() == 6
+        assert page.locator("#metrics tr").count() == 8
+        page.locator(".counterexamples summary").click()
+        page.locator(".counterexamples img").evaluate("el=>el.decode()")
+        assert page.locator(".counterexamples img").is_visible()
+        page.goto("about:blank")
+        page.goto(base + "#priors", wait_until="domcontentloaded")
+        page.locator("#prior-panel:visible").wait_for()
+        assert page.locator("#fixed-prior8").is_visible()
         assert not errors, errors
         print(json.dumps({"url": url, "browser": browser.version, "samples": len(results["samples"]),
                           "max_rgb_error_uint8": maximum, "synchronized_crops": True, "cross_size": True,
-                          "seed_repeat": True, "mobile_layout": True}))
+                          "seed_repeat": True, "prior_versions": True, "fixed_real_reference": True,
+                          "mobile_layout": True}))
         browser.close()
 
 

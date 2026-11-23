@@ -1,13 +1,15 @@
 const get = id => document.getElementById(id);
 const sides = [16, 8];
 const sessions = new Map();
-let catalog, runtime, busy = false, priorShown = false;
+let catalog, runtime, busy = false;
+let priorStatus = '实验记录使用 PyTorch 种子 2026。点击生成可用浏览器的随机数生成器重新抽样，同一浏览器种子可复现。';
 const slots = ['baseline', 'optimized'];
 const photos = ['original', ...slots];
 const models = {
   baseline: {label: '首版', prefix: '', image: 'recon'},
-  optimized: {label: '上轮', prefix: 'detail-', image: 'detail'},
-  paper: {label: '本轮', prefix: 'paper-', image: 'paper'},
+  optimized: {label: '60 轮版', prefix: 'detail-', image: 'detail'},
+  paper: {label: '论文版', prefix: 'paper-', image: 'paper'},
+  context: {label: '本轮', prefix: 'context-', image: 'context'},
 };
 const cropSize = 12;
 let cropX = 10, cropY = 10;
@@ -68,9 +70,10 @@ function comparisons() {
     const version = mode.slice(5);
     return sides.map(side => ({side, version, label: side + ' × ' + side}));
   }
-  const current = mode.startsWith('paper-');
-  const side = Number(current ? mode.slice(6) : mode);
-  const pair = current ? ['optimized', 'paper'] : ['baseline', 'optimized'];
+  const [key, size] = mode.split('-');
+  const side = Number(size || key);
+  const pairs = {paper: ['optimized', 'paper'], context: ['paper', 'context']};
+  const pair = pairs[key] || ['baseline', 'optimized'];
   return pair.map(version => ({side, version, label: models[version].label}));
 }
 
@@ -164,19 +167,21 @@ async function reconstruct() {
 
 async function generate() {
   const seed = Number(get('seed').value);
+  const version = get('prior-version').value;
   const ort = await loadRuntime();
   const grids = [];
   for (const side of sides) {
-    get('status').textContent = '正在用 ' + side + ' × ' + side + ' 解码器生成 16 张图…';
-    const decoder = await session(side, 'decoder');
+    get('status').textContent = '正在用' + models[version].label + ' ' + side + ' × ' + side + ' 解码器生成 32 张图…';
+    const decoder = await session(side, 'decoder', version);
     const normal = makeNormal(seed);
     const grid = document.createElement('canvas');
-    grid.width = grid.height = 128;
+    grid.width = 256;
+    grid.height = 128;
     const ctx = grid.getContext('2d');
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 32; i++) {
       const z = new ort.Tensor('float32', normal(4*side*side), [1,4,side,side]);
       const {rgb} = await decoder.run({z});
-      ctx.putImageData(rgbImage(rgb.data), (i%4)*32, Math.floor(i/4)*32);
+      ctx.putImageData(rgbImage(rgb.data), (i%8)*32, Math.floor(i/8)*32);
     }
     grids.push(grid);
   }
@@ -184,10 +189,11 @@ async function generate() {
     const canvas = get('prior' + side);
     canvas.getContext('2d').drawImage(grids[i], 0, 0);
     canvas.hidden = false;
-    canvas.setAttribute('aria-label', side + ' × ' + side + ' 解码器生成的 16 张未筛选图像');
+    get('fixed-prior' + side).hidden = true;
+    canvas.setAttribute('aria-label', models[version].label + ' ' + side + ' × ' + side + ' 解码器生成的 32 张未筛选图像');
   });
-  priorShown = true;
-  get('status').textContent = '种子 ' + seed + '，每组展示该尺寸下连续抽取的前 16 张图像。';
+  priorStatus = '种子 ' + seed + '，' + models[version].label + '解码器在本地浏览器生成，每组连续 32 张。';
+  get('status').textContent = priorStatus;
 }
 
 function switchMode(prior) {
@@ -195,24 +201,25 @@ function switchMode(prior) {
   get('recon-panel').hidden = prior;
   get('choose-prior').setAttribute('aria-pressed', prior);
   get('choose-recon').setAttribute('aria-pressed', !prior);
-  if (prior && !priorShown) {
-    run(generate);
-  } else if (prior) {
-    get('status').textContent = '改变种子后点击生成，可观察另一组未筛选的先验样本。';
+  if (prior) {
+    get('status').textContent = priorStatus;
   } else {
     showExample();
   }
 }
 
 async function init() {
-  const documents = await Promise.all(['results.json', 'detail-results.json', 'paper-results.json'].map(async name => {
+  const documents = await Promise.all(['results.json', 'detail-results.json', 'paper-results.json', 'context-results.json'].map(async name => {
     const res = await fetch('./' + name);
     if (!res.ok) throw Error('无法读取测试结果（HTTP ' + res.status + '）。');
     return res.json();
   }));
-  const [samples, detail, paper] = documents;
+  const [samples, detail, paper, current] = documents;
   catalog = samples;
-  const metrics = Object.fromEntries(sides.map(side => [side, {...detail.models[side], paper: paper.models[side]}]));
+  const metrics = Object.fromEntries(sides.map(side => [side, {...detail.models[side], paper: paper.models[side], context: current.models[side]}]));
+  get('budget-note').textContent = current.training_note;
+  const paired = sides.map(side => side + ' × ' + side + ' 有 ' + current.models[side].lower_detail_error_count.toLocaleString('zh-CN') + ' 张');
+  get('paired-note').textContent = '逐张与上轮论文版对照，10,000 张测试图中，' + paired.join('，') + '的局部细节误差下降。';
   for (const s of catalog.samples) get('sample').add(new Option(s.name + ' · #' + s.index, s.index));
   get('sample').value = '11';
   for (const side of [8, 16]) {
@@ -242,10 +249,21 @@ async function init() {
   });
   get('recon-form').addEventListener('submit', e => { e.preventDefault(); run(reconstruct); });
   get('prior-form').addEventListener('submit', e => { e.preventDefault(); run(generate); });
+  get('prior-version').addEventListener('change', () => {
+    sides.forEach(side => { get('prior' + side).hidden = true; get('fixed-prior' + side).hidden = true; });
+    priorStatus = '点击生成，查看所选解码器的先验样本。';
+    if (get('prior-form').reportValidity()) run(generate);
+    else get('status').textContent = priorStatus;
+  });
   get('choose-recon').addEventListener('click', () => switchMode(false));
   get('choose-prior').addEventListener('click', () => switchMode(true));
   showExample();
   defaultCrop();
   setBusy(false);
+  if (location.hash === '#priors') switchMode(true);
+  window.addEventListener('hashchange', () => {
+    if (location.hash === '#priors') switchMode(true);
+    if (location.hash === '#comparison') switchMode(false);
+  });
 }
 init().catch(error => { get('status').textContent = error.message; });

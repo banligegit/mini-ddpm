@@ -21,7 +21,9 @@ input,select { background:white; color:var(--ink); width:14rem; max-width:100%; 
 .action { background:var(--green); border-color:var(--green); color:white; }
 .images { display:grid; gap:clamp(8px,2vw,20px); }
 .reconstruction { grid-template-columns:repeat(3,minmax(0,1fr)); }
-.prior { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.prior { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.prior figcaption { padding:0 0 6px; }
+.prior img,.prior canvas { height:auto; aspect-ratio:auto; }
 figure { margin:0; min-width:0; }
 figure img, figure canvas { display:block; width:100%; aspect-ratio:1; background:#e1e4da; image-rendering:pixelated; }
 .photo { display:block; width:100%; padding:0; border:0; position:relative; background:transparent; }
@@ -40,10 +42,17 @@ figcaption small { display:block; color:var(--quiet); font-size:14px; font-weigh
 .measurements { border-top:1px solid var(--line); margin-top:30px; padding-top:24px; }
 table { width:100%; border-collapse:collapse; margin-top:14px; font-variant-numeric:tabular-nums; }
 .budget-note { margin-top:10px; font-size:14px; }
+.counterexamples { margin:12px 0; }
+.counterexamples summary { cursor:pointer; color:var(--green); }
+.counterexamples p { margin:8px 0; font-size:14px; }
+.counterexamples img { display:block; max-width:100%; height:auto; }
 td,th { text-align:right; padding:10px 4px; border-bottom:1px solid var(--line); }
 td:first-child,th:first-child { text-align:left; }
 footer { margin-top:30px; font-size:14px; }
 [hidden] { display:none!important; }
+@media (max-width:700px) {
+  .prior { grid-template-columns:1fr; }
+}
 @media (max-width:450px) {
   form { gap:8px; }
   input,select { width:10rem; }
