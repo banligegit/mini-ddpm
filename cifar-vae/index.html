@@ -12,7 +12,7 @@
   <header>
     <nav aria-label="项目导航"><a href="../">手写数字生成器</a><a href="https://github.com/banligegit/mini-ddpm/tree/main/site/cifar-vae">网页源码</a></nav>
     <h1>同一张图，两种压缩尺度</h1>
-    <p>两个卷积 VAE 将 32 × 32 的彩色照片压缩为 1,024 或 256 个数，再从这些数重建图像。</p>
+    <p>这里演示两份原始权重（β = 0.003）。它们将 32 × 32 的彩色照片压缩为 1,024 或 256 个数，再从这些数重建图像。</p>
   </header>
   <section aria-label="交互实验">
     <div class="mode-switch" role="group" aria-label="实验模式">
@@ -47,7 +47,16 @@
     <p>对 10,000 张测试图像逐张用后验均值重建，再平均每张图的指标。PSNR 衡量像素误差，SSIM 衡量局部结构相似度，两者越高越好。</p>
     <table><thead><tr><th scope="col">潜变量</th><th scope="col">坐标数</th><th scope="col">PSNR / dB</th><th scope="col">SSIM</th></tr></thead><tbody id="metrics"></tbody></table>
   </section>
-  <footer><a href="./mini-ddpm-cifar-vae.zip" download>下载实验提交包</a><a href="https://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10 数据集</a><span>模型推理在当前浏览器内完成</span></footer>
+  <section class="measurements" aria-labelledby="report-heading">
+    <h2 id="report-heading">报告与实验文件</h2>
+    <p>修订报告比较两份原始权重的后验分布，并记录在同一训练预算下改变 8 × 8 模型 β 的结果。</p>
+    <ul>
+      <li><a href="./cifar-vae-revised.pdf">查看修订报告（PDF，3 页）</a></li>
+      <li><a href="./mini-ddpm-cifar-vae-revised.zip" download>下载新版提交包（ZIP）</a></li>
+      <li><a href="./mini-ddpm-cifar-vae.zip" download>下载原始基线提交包（ZIP）</a></li>
+    </ul>
+  </section>
+  <footer><a href="https://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10 数据集</a><span>模型推理在当前浏览器内完成</span></footer>
 </main>
 <script type="module" src="./app.js"></script>
 </body>
