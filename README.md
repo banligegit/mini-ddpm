@@ -2,6 +2,20 @@
 
 [打开网页](https://banligegit.github.io/mini-ddpm/) · [GitHub 仓库](https://github.com/banligegit/mini-ddpm)
 
+## CIFAR-10 卷积 VAE
+
+[题目五在线实验](https://banligegit.github.io/mini-ddpm/cifar-vae/)展示同一测试图的两种确定性重建，并支持从标准正态分布采样。模型在浏览器内用 ONNX Runtime Web 的 WASM 后端推理。测试图按类别各取官方测试集首张；整套测试集的 PSNR、SSIM 来自对 10,000 张图的评估。
+
+从页面下载实验提交包。解压后在包含 `model.py` 的目录安装 `onnx`、`onnxruntime` 及提交包中的依赖，执行下列命令可更新本仓库的网页模型、测试图和指标；将路径参数替换为实际检出位置。重新导出前，数据目录应已有官方 CIFAR-10，或可联网首次下载。
+
+```sh
+python export_web.py --output /path/to/mini-ddpm/site/cifar-vae
+```
+
+从本仓库根目录运行 `npx --yes http-server site -p 8080`，打开 `http://localhost:8080/cifar-vae/`。安装 Chrome、NumPy、Pillow 和 Python Playwright 后，`python cifar_vae/verify_browser.py http://localhost:8080/cifar-vae/` 可核对十张样例、同种子复现和移动布局。
+
+## MNIST 手写数字生成器
+
 随机类别或指定 0–9，选择 DDIM 10/20/50/200 步。种子为 0–4294967295 的整数。JS 用 32 位生成器和 Box–Muller 产生 784 个高斯值。Canvas 将 [-1,1] 映射到 [0,255]。每个模型在首次使用时加载并创建会话，随后复用。需要支持 WebGPU 的浏览器及 HTTPS 或 localhost。
 
 ## 本地运行

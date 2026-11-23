@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ee">
+  <title>CIFAR-10 图像压缩与重建 · Mini DDPM</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<main>
+  <header>
+    <nav aria-label="项目导航"><a href="../">手写数字生成器</a><a href="https://github.com/banligegit/mini-ddpm/tree/main/site/cifar-vae">网页源码</a></nav>
+    <h1>同一张图，两种压缩尺度</h1>
+    <p>两个卷积 VAE 将 32 × 32 的彩色照片压缩为 1,024 或 256 个数，再从这些数重建图像。</p>
+  </header>
+  <section aria-label="交互实验">
+    <div class="mode-switch" role="group" aria-label="实验模式">
+      <button id="choose-recon" aria-pressed="true">对比重建</button>
+      <button id="choose-prior" aria-pressed="false">从先验生成</button>
+    </div>
+    <div id="recon-panel">
+      <form id="recon-form">
+        <label for="sample">测试图像<select id="sample" disabled></select></label>
+        <button type="submit" class="action" disabled>在浏览器中重建</button>
+      </form>
+      <div class="images reconstruction">
+        <figure><img id="original" alt="选中的 CIFAR-10 测试原图"><figcaption>原图 <small>32 × 32 · RGB</small></figcaption></figure>
+        <figure><img id="recon16" alt="较大潜变量的重建结果"><figcaption>16 × 16 × 4 <small>后验均值重建</small></figcaption></figure>
+        <figure><img id="recon8" alt="较小潜变量的重建结果"><figcaption>8 × 8 × 4 <small>后验均值重建</small></figcaption></figure>
+      </div>
+    </div>
+    <div id="prior-panel" hidden>
+      <form id="prior-form">
+        <label for="seed">随机种子<input id="seed" type="number" min="0" max="4294967295" step="1" value="2026" required></label>
+        <button type="submit" class="action" disabled>生成两组图像</button>
+      </form>
+      <div class="images prior">
+        <figure><canvas id="prior16" width="128" height="128" hidden></canvas><figcaption>16 × 16 × 4 <small>先验解码</small></figcaption></figure>
+        <figure><canvas id="prior8" width="128" height="128" hidden></canvas><figcaption>8 × 8 × 4 <small>先验解码</small></figcaption></figure>
+      </div>
+    </div>
+    <p id="status" role="status" aria-live="polite">正在读取测试结果…</p>
+  </section>
+  <section class="measurements" aria-labelledby="measurement-heading">
+    <h2 id="measurement-heading">整套测试集的重建表现</h2>
+    <p>对 10,000 张测试图像逐张用后验均值重建，再平均每张图的指标。PSNR 衡量像素误差，SSIM 衡量局部结构相似度，两者越高越好。</p>
+    <table><thead><tr><th scope="col">潜变量</th><th scope="col">坐标数</th><th scope="col">PSNR / dB</th><th scope="col">SSIM</th></tr></thead><tbody id="metrics"></tbody></table>
+  </section>
+  <footer><a href="./mini-ddpm-cifar-vae.zip" download>下载实验提交包</a><a href="https://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10 数据集</a><span>模型推理在当前浏览器内完成</span></footer>
+</main>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
