@@ -1,0 +1,37 @@
+{
+  "test_image_count": 10000,
+  "models": {
+    "8": {
+      "baseline": {
+        "psnr": 25.48556791267395,
+        "ssim": 0.8468246865928173,
+        "local_detail_mae": 7.87406847742796
+      },
+      "optimized": {
+        "psnr": 26.543438179588318,
+        "ssim": 0.8693723771393299,
+        "local_detail_mae": 7.088726462829113,
+        "checkpoint_sha256": "6eb3a19161b7a6a5366862a314e096359079f051271edde0eabadb86a3782efb",
+        "encoder_max_abs": 3.1739473342895508e-06,
+        "decoder_max_abs": 1.7881393432617188e-07,
+        "candidate": "detail60"
+      }
+    },
+    "16": {
+      "baseline": {
+        "psnr": 28.950226698112488,
+        "ssim": 0.9357204919993878,
+        "local_detail_mae": 5.754867303800583
+      },
+      "optimized": {
+        "psnr": 33.24403390064239,
+        "ssim": 0.9717038415193557,
+        "local_detail_mae": 3.4368800193071367,
+        "checkpoint_sha256": "0f1858f1d98d74a8c2d6e652f243cd21e14e1efe6aa3f61f480e05a570b67cac",
+        "encoder_max_abs": 3.874301910400391e-06,
+        "decoder_max_abs": 1.7881393432617188e-07,
+        "candidate": "detail60"
+      }
+    }
+  }
+}
