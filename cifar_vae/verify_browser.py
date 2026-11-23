@@ -1,6 +1,7 @@
 """Compare the live browser reconstructions with the PyTorch examples and test seeded priors."""
 import argparse
 import base64
+from functools import lru_cache
 import io
 import json
 import urllib.parse
@@ -22,6 +23,13 @@ def main():
     args = parser.parse_args()
     url = args.url
     base = urllib.parse.urljoin(url, ".")
+
+    @lru_cache(maxsize=None)
+    def reference(idx, prefix, side):
+        img_url = urllib.parse.urljoin(base, f"samples/{idx}-{prefix}{side}.png")
+        with urllib.request.urlopen(img_url, timeout=30) as stream:
+            return np.asarray(Image.open(io.BytesIO(stream.read())).convert("RGB"), dtype=np.int16)
+
     with sync_playwright() as pw:
         browser = pw.chromium.launch(channel="chrome", headless=True)
         page = browser.new_page(viewport={"width": 980, "height": 920})
@@ -34,10 +42,12 @@ def main():
         with urllib.request.urlopen(urllib.parse.urljoin(base, "results.json"), timeout=30) as stream:
             results = json.load(stream)
         assert page.locator("#sample").input_value() == "11"
-        assert page.locator("#latent-size").input_value() == "16"
+        assert page.locator("#latent-size").input_value() == "paper-16"
         maximum = {}
-        for side in (16, 8):
-            page.select_option("#latent-size", str(side))
+        modes = [("paper-16", 16, ("detail", "paper")), ("paper-8", 8, ("detail", "paper")),
+                 ("16", 16, ("recon", "detail")), ("8", 8, ("recon", "detail"))]
+        for mode, side, prefixes in modes:
+            page.select_option("#latent-size", mode)
             for sample in results["samples"]:
                 idx = sample["index"]
                 page.select_option("#sample", str(idx))
@@ -46,26 +56,21 @@ def main():
                 assert "浏览器重建完成" in page.locator("#status").inner_text(), page.locator("#status").inner_text()
                 xy = page.locator("#crop-coordinates").inner_text().split("(")[1].rstrip(")")
                 x, y = map(int, xy.split(","))
-                for version, prefix in (("baseline", "recon"), ("optimized", "detail")):
-                    actual = png_array(page.locator("#" + version).get_attribute("src"))
-                    url_img = urllib.parse.urljoin(base, f"samples/{idx}-{prefix}{side}.png")
-                    with urllib.request.urlopen(url_img, timeout=30) as stream:
-                        ref = np.asarray(Image.open(io.BytesIO(stream.read())).convert("RGB"), dtype=np.int16)
-                    key = f"{version}{side}"
+                for slot, prefix in zip(("baseline","optimized"), prefixes):
+                    actual = png_array(page.locator("#" + slot).get_attribute("src"))
+                    ref = reference(idx, prefix, side)
+                    key = f"{prefix}{side}"
                     maximum[key] = max(maximum.get(key, 0), int(np.abs(ref - actual).max()))
-                    cropped = png_array(page.locator("#zoom-" + version).evaluate("el=>el.toDataURL()"))
-                    assert np.array_equal(cropped, actual[y:y+12,x:x+12]), (idx,side,version)
+                    cropped = png_array(page.locator("#zoom-" + slot).evaluate("el=>el.toDataURL()"))
+                    assert np.array_equal(cropped, actual[y:y+12,x:x+12]), (idx,side,prefix)
         assert max(maximum.values()) <= 1, maximum
-        for version, prefix in (("baseline", "recon"), ("optimized", "detail")):
+        for version, prefix in (("baseline", "recon"), ("optimized", "detail"), ("paper", "paper")):
             page.select_option("#latent-size", "both-" + version)
             page.locator("#recon-form button").click()
             page.wait_for_function("document.querySelector('#status').textContent.includes('浏览器重建完成')")
             for slot, side in (("baseline", 16), ("optimized", 8)):
                 shown = png_array(page.locator("#" + slot).get_attribute("src"))
-                reference = urllib.parse.urljoin(base, f"samples/{idx}-{prefix}{side}.png")
-                with urllib.request.urlopen(reference, timeout=30) as stream:
-                    ref = np.asarray(Image.open(io.BytesIO(stream.read())).convert("RGB"), dtype=np.int16)
-                assert np.abs(shown - ref).max() <= 1
+                assert np.abs(shown - reference(idx,prefix,side)).max() <= 1
         crop_button = page.locator("#crop-source")
         crop_button.click(position={"x": 1, "y": 1})
         assert "(0, 0)" in page.locator("#crop-coordinates").inner_text()
@@ -86,7 +91,7 @@ def main():
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         page.locator("#choose-recon").click()
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-        assert page.locator("#metrics tr").count() == 4
+        assert page.locator("#metrics tr").count() == 6
         assert not errors, errors
         print(json.dumps({"url": url, "browser": browser.version, "samples": len(results["samples"]),
                           "max_rgb_error_uint8": maximum, "synchronized_crops": True, "cross_size": True,

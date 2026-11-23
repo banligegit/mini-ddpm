@@ -1,9 +1,14 @@
 const get = id => document.getElementById(id);
 const sides = [16, 8];
 const sessions = new Map();
-let catalog, detail, runtime, busy = false, priorShown = false;
-const versions = ['baseline', 'optimized'];
-const photos = ['original', ...versions];
+let catalog, runtime, busy = false, priorShown = false;
+const slots = ['baseline', 'optimized'];
+const photos = ['original', ...slots];
+const models = {
+  baseline: {label: '首版', prefix: '', image: 'recon'},
+  optimized: {label: '上轮', prefix: 'detail-', image: 'detail'},
+  paper: {label: '本轮', prefix: 'paper-', image: 'paper'},
+};
 const cropSize = 12;
 let cropX = 10, cropY = 10;
 
@@ -17,7 +22,7 @@ async function loadRuntime() {
 }
 
 async function session(side, part, version = 'baseline') {
-  const key = (version === 'optimized' ? 'detail-' : '') + part + side;
+  const key = models[version].prefix + part + side;
   if (!sessions.has(key)) {
     const ort = await loadRuntime();
     const url = new URL('./models/' + key + '.onnx', import.meta.url).href;
@@ -63,7 +68,10 @@ function comparisons() {
     const version = mode.slice(5);
     return sides.map(side => ({side, version, label: side + ' × ' + side}));
   }
-  return versions.map(version => ({side:Number(mode), version, label:version === 'baseline' ? '原版' : '优化版'}));
+  const current = mode.startsWith('paper-');
+  const side = Number(current ? mode.slice(6) : mode);
+  const pair = current ? ['optimized', 'paper'] : ['baseline', 'optimized'];
+  return pair.map(version => ({side, version, label: models[version].label}));
 }
 
 function updateZoom(id) {
@@ -98,8 +106,8 @@ function showExample() {
   const path = './samples/' + sample.index + '-';
   get('original').src = path + 'original.png';
   comparisons().forEach(({side, version, label}, i) => {
-    const id = versions[i];
-    get(id).src = path + (version === 'baseline' ? 'recon' : 'detail') + side + '.png';
+    const id = slots[i];
+    get(id).src = path + models[version].image + side + '.png';
     get(id).alt = label + '的后验均值重建';
     get('label-' + id).textContent = label + '重建';
     get('crop-label-' + id).textContent = label + '局部';
@@ -148,9 +156,9 @@ async function reconstruct() {
     ctx.putImageData(rgbImage(rgb.data), 0, 0);
     previews.push(work.toDataURL('image/png'));
   }
-  versions.forEach((version,i) => { get(version).src = previews[i]; });
-  await Promise.all(versions.map(id => get(id).decode()));
-  versions.forEach(updateZoom);
+  slots.forEach((slot,i) => { get(slot).src = previews[i]; });
+  await Promise.all(slots.map(id => get(id).decode()));
+  slots.forEach(updateZoom);
   get('status').textContent = '浏览器重建完成。两份模型分别编码同一张原图，再解码各自的后验均值。';
 }
 
@@ -197,17 +205,20 @@ function switchMode(prior) {
 }
 
 async function init() {
-  [catalog, detail] = await Promise.all(['results.json', 'detail-results.json'].map(async name => {
+  const documents = await Promise.all(['results.json', 'detail-results.json', 'paper-results.json'].map(async name => {
     const res = await fetch('./' + name);
     if (!res.ok) throw Error('无法读取测试结果（HTTP ' + res.status + '）。');
     return res.json();
   }));
+  const [samples, detail, paper] = documents;
+  catalog = samples;
+  const metrics = Object.fromEntries(sides.map(side => [side, {...detail.models[side], paper: paper.models[side]}]));
   for (const s of catalog.samples) get('sample').add(new Option(s.name + ' · #' + s.index, s.index));
   get('sample').value = '11';
   for (const side of [8, 16]) {
-    for (const version of versions) {
-      const m = detail.models[side][version], tr = get('metrics').insertRow();
-      for (const text of [side + ' × ' + side, version === 'baseline' ? '原版' : '优化版',
+    for (const [version, spec] of Object.entries(models)) {
+      const m = metrics[side][version], tr = get('metrics').insertRow();
+      for (const text of [side + ' × ' + side, spec.label,
                           m.psnr.toFixed(2), m.ssim.toFixed(4), m.local_detail_mae.toFixed(2)]) {
         tr.insertCell().textContent = text;
       }

@@ -22,7 +22,17 @@
     <div id="recon-panel">
       <form id="recon-form">
         <label for="sample">测试图像<select id="sample" disabled></select></label>
-        <label for="latent-size">对比内容<select id="latent-size" disabled><option value="16">16 × 16 · 优化前后</option><option value="8">8 × 8 · 优化前后</option><option value="both-optimized">优化版 · 两种尺寸</option><option value="both-baseline">原版 · 两种尺寸</option></select></label>
+        <label for="latent-size">对比内容<select id="latent-size" disabled>
+          <optgroup label="上轮与本轮">
+            <option value="paper-16">16 × 16 · 上轮与本轮</option><option value="paper-8">8 × 8 · 上轮与本轮</option>
+          </optgroup>
+          <optgroup label="首版与上轮">
+            <option value="16">16 × 16 · 首版与上轮</option><option value="8">8 × 8 · 首版与上轮</option>
+          </optgroup>
+          <optgroup label="比较两种尺寸">
+            <option value="both-paper">本轮 · 两种尺寸</option><option value="both-optimized">上轮 · 两种尺寸</option><option value="both-baseline">首版 · 两种尺寸</option>
+          </optgroup>
+        </select></label>
         <button type="submit" class="action" disabled>在浏览器中重建</button>
       </form>
       <div class="images reconstruction" id="comparison">
@@ -31,20 +41,20 @@
           <button type="button" id="crop-source" class="photo" aria-label="在原图选择放大位置" aria-describedby="crop-help"><img id="original" src="./samples/11-original.png" width="32" height="32" alt="CIFAR-10 测试原图"><span class="crop-frame" aria-hidden="true"></span></button>
         </figure>
         <figure>
-          <figcaption id="label-baseline">原版重建</figcaption>
-          <div class="photo"><img id="baseline" src="./samples/11-recon16.png" width="32" height="32" alt="原版 VAE 后验均值重建"><span class="crop-frame" aria-hidden="true"></span></div>
+          <figcaption id="label-baseline">上轮重建</figcaption>
+          <div class="photo"><img id="baseline" src="./samples/11-detail16.png" width="32" height="32" alt="上轮 VAE 后验均值重建"><span class="crop-frame" aria-hidden="true"></span></div>
         </figure>
         <figure>
-          <figcaption id="label-optimized">优化版重建</figcaption>
-          <div class="photo"><img id="optimized" src="./samples/11-detail16.png" width="32" height="32" alt="细节优化后的 VAE 后验均值重建"><span class="crop-frame" aria-hidden="true"></span></div>
+          <figcaption id="label-optimized">本轮重建</figcaption>
+          <div class="photo"><img id="optimized" src="./samples/11-paper16.png" width="32" height="32" alt="本轮 VAE 后验均值重建"><span class="crop-frame" aria-hidden="true"></span></div>
         </figure>
       </div>
       <div class="crop-heading"><h2>局部放大</h2><output id="crop-coordinates"></output></div>
       <p id="crop-help">点击原图选择 12 × 12 像素区域，或聚焦原图后用方向键移动。</p>
       <div class="images reconstruction crops">
         <figure><canvas id="zoom-original" width="12" height="12" aria-label="原图局部放大"></canvas><figcaption>原图局部</figcaption></figure>
-        <figure><canvas id="zoom-baseline" width="12" height="12" aria-label="原版重建局部放大"></canvas><figcaption id="crop-label-baseline">原版局部</figcaption></figure>
-        <figure><canvas id="zoom-optimized" width="12" height="12" aria-label="优化版重建局部放大"></canvas><figcaption id="crop-label-optimized">优化版局部</figcaption></figure>
+        <figure><canvas id="zoom-baseline" width="12" height="12" aria-label="上轮重建局部放大"></canvas><figcaption id="crop-label-baseline">上轮局部</figcaption></figure>
+        <figure><canvas id="zoom-optimized" width="12" height="12" aria-label="本轮重建局部放大"></canvas><figcaption id="crop-label-optimized">本轮局部</figcaption></figure>
       </div>
     </div>
     <div id="prior-panel" hidden>
@@ -64,13 +74,15 @@
     <h2 id="measurement-heading">整套测试集的重建表现</h2>
     <p>对官方 10,000 张测试图用后验均值重建。PSNR 和 SSIM 越高越好；细节误差比较像素相对 3 × 3 局部均值的偏差，以 0–255 的强度单位计，越低越好。</p>
     <table><thead><tr><th scope="col">尺寸</th><th scope="col">版本</th><th scope="col">PSNR<br>（dB）↑</th><th scope="col">SSIM ↑</th><th scope="col">细节误差 ↓</th></tr></thead><tbody id="metrics"></tbody></table>
-    <p class="budget-note">原版使用 50,000 张训练图训练 10 轮。细节优化实验固定 45,000 张训练图，并用另外 5,000 张验证图选择权重。两版都采用 β = 0.003。</p>
+    <p class="budget-note">首版使用 50,000 张图训练 10 轮。上轮在固定 45,000 张图上训练 60 轮。本轮从上轮权重出发再训练 20 轮，以另外 5,000 张验证图选型。两种尺寸均选中增加残差分支和子像素重排的版本，潜变量大小与上轮一致。</p>
   </section>
   <section class="measurements" aria-labelledby="report-heading">
     <h2 id="report-heading">报告与实验文件</h2>
     <p>修订报告比较两份原始权重的后验分布，并记录在同一训练预算下改变 8 × 8 模型 β 的结果。</p>
     <ul>
-      <li><a href="./cifar-vae-detail.zip" download>下载细节优化实验包（权重、数据和对比图）</a></li>
+      <li><a href="./paper-detail-note.pdf">查看本轮重建细节技术简报（PDF）</a></li>
+      <li><a href="./cifar-vae-paper-detail.zip" download>下载本轮论文优化实验包（代码、权重和对比图）</a></li>
+      <li><a href="./cifar-vae-detail.zip" download>下载上轮细节优化实验包</a></li>
       <li><a href="./cifar-vae-revised.pdf">查看修订报告（PDF，3 页）</a></li>
       <li><a href="./mini-ddpm-cifar-vae-revised.zip" download>下载新版提交包（ZIP）</a></li>
       <li><a href="./mini-ddpm-cifar-vae.zip" download>下载原始基线提交包（ZIP）</a></li>
@@ -78,6 +90,6 @@
   </section>
   <footer><a href="https://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10 数据集</a><span>模型推理在当前浏览器内完成</span></footer>
 </main>
-<script type="module" src="./app.js?v=detail-1"></script>
+<script type="module" src="./app.js?v=paper-1"></script>
 </body>
 </html>
