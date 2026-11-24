@@ -74,7 +74,8 @@ def main():
         page.locator("#recon-form button:enabled").wait_for()
         assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
         page.locator("#choose-prior").click()
-        assert page.locator("#fixed-prior8").is_visible()
+        page.locator("#fixed-prior8").evaluate("img=>img.decode()")
+        page.locator("#fixed-prior8").wait_for(state="visible")
         assert not errors, errors
         result.update(browser=browser.version,url=args.url,seed_repeat=True,seed_change=True,condition_change=True,seeded_class_draw=picked)
         print(json.dumps(result,ensure_ascii=False),flush=True)
