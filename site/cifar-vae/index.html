@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f4ee">
-  <title>CIFAR-10 图像压缩与重建 · Mini DDPM</title>
-  <link rel="stylesheet" href="./style.css?v=context-1">
+  <title>CIFAR-10 原图与 VAE 重建 · Mini DDPM</title>
+  <link rel="stylesheet" href="./style.css?v=best-1">
 </head>
 <body>
 <main>
   <header>
     <nav aria-label="项目导航"><a href="../">手写数字生成器</a><a href="https://github.com/banligegit/mini-ddpm/tree/main/site/cifar-vae">网页源码</a></nav>
-    <h1>CIFAR-10 重建细节对照</h1>
-    <p>固定同一张原图，比较优化前后的颜色、轮廓和纹理，也可以对照两种潜变量尺寸。</p>
+    <h1>CIFAR-10 原图与重建</h1>
+    <p>同一张 32 × 32 彩色照片，分别压缩到 16 × 16 × 4 和 8 × 8 × 4，再用解码器还原。每种尺寸展示验证集选中的模型。</p>
   </header>
   <section aria-label="交互实验">
     <div class="mode-switch" id="priors" role="group" aria-label="实验模式">
@@ -22,84 +22,58 @@
     <div id="recon-panel">
       <form id="recon-form">
         <label for="sample">测试图像<select id="sample" disabled></select></label>
-        <label for="latent-size">对比内容<select id="latent-size" disabled>
-          <optgroup label="上轮与本轮">
-            <option value="context-16">16 × 16 · 论文版与本轮</option><option value="context-8">8 × 8 · 论文版与本轮</option>
-          </optgroup>
-          <optgroup label="往轮对比">
-            <option value="paper-16">16 × 16 · 60 轮版与论文版</option><option value="paper-8">8 × 8 · 60 轮版与论文版</option>
-            <option value="16">16 × 16 · 首版与 60 轮版</option><option value="8">8 × 8 · 首版与 60 轮版</option>
-          </optgroup>
-          <optgroup label="比较两种尺寸">
-            <option value="both-context">本轮 · 两种尺寸</option><option value="both-paper">论文版 · 两种尺寸</option><option value="both-optimized">60 轮版 · 两种尺寸</option><option value="both-baseline">首版 · 两种尺寸</option>
-          </optgroup>
-        </select></label>
         <button type="submit" class="action" disabled>在浏览器中重建</button>
       </form>
       <div class="images reconstruction" id="comparison">
         <figure>
           <figcaption>CIFAR-10 原图</figcaption>
-          <button type="button" id="crop-source" class="photo" aria-label="在原图选择放大位置" aria-describedby="crop-help"><img id="original" src="./samples/11-original.png" width="32" height="32" alt="CIFAR-10 测试原图"><span class="crop-frame" aria-hidden="true"></span></button>
+          <button type="button" id="crop-source" class="photo" aria-label="在原图选择放大位置" aria-describedby="crop-help"><img id="original" src="./samples/11-original.png" width="32" height="32" alt="真实 CIFAR-10 测试原图"><span class="crop-frame" aria-hidden="true"></span></button>
         </figure>
         <figure>
-          <figcaption id="label-baseline">论文版重建</figcaption>
-          <div class="photo"><img id="baseline" src="./samples/11-paper16.png" width="32" height="32" alt="论文版 VAE 后验均值重建"><span class="crop-frame" aria-hidden="true"></span></div>
+          <figcaption>16 × 16 × 4 重建</figcaption>
+          <div class="photo"><img id="recon16" src="./samples/11-best16.png" width="32" height="32" alt="16 × 16 后验均值重建"><span class="crop-frame" aria-hidden="true"></span></div>
         </figure>
         <figure>
-          <figcaption id="label-optimized">本轮重建</figcaption>
-          <div class="photo"><img id="optimized" src="./samples/11-context16.png" width="32" height="32" alt="本轮 VAE 后验均值重建"><span class="crop-frame" aria-hidden="true"></span></div>
+          <figcaption>8 × 8 × 4 重建</figcaption>
+          <div class="photo"><img id="recon8" src="./samples/11-best8.png" width="32" height="32" alt="8 × 8 后验均值重建"><span class="crop-frame" aria-hidden="true"></span></div>
         </figure>
       </div>
       <div class="crop-heading"><h2>局部放大</h2><output id="crop-coordinates"></output></div>
       <p id="crop-help">点击原图选择 12 × 12 像素区域，或聚焦原图后用方向键移动。</p>
       <div class="images reconstruction crops">
         <figure><canvas id="zoom-original" width="12" height="12" aria-label="原图局部放大"></canvas><figcaption>原图局部</figcaption></figure>
-        <figure><canvas id="zoom-baseline" width="12" height="12" aria-label="上轮重建局部放大"></canvas><figcaption id="crop-label-baseline">上轮局部</figcaption></figure>
-        <figure><canvas id="zoom-optimized" width="12" height="12" aria-label="本轮重建局部放大"></canvas><figcaption id="crop-label-optimized">本轮局部</figcaption></figure>
+        <figure><canvas id="zoom-recon16" width="12" height="12" aria-label="16 × 16 重建局部放大"></canvas><figcaption>16 × 16 局部</figcaption></figure>
+        <figure><canvas id="zoom-recon8" width="12" height="12" aria-label="8 × 8 重建局部放大"></canvas><figcaption>8 × 8 局部</figcaption></figure>
       </div>
     </div>
     <div id="prior-panel" hidden>
       <form id="prior-form">
-        <label for="prior-version">解码器<select id="prior-version" disabled><option value="context">本轮</option><option value="paper">上轮论文版</option><option value="optimized">60 轮版</option><option value="baseline">首版</option></select></label>
         <label for="seed">随机种子<input id="seed" type="number" min="0" max="4294967295" step="1" value="2026" required></label>
         <button type="submit" class="action" disabled>在浏览器中生成</button>
       </form>
-      <p class="prior-note">第一组是官方测试集的前 32 张照片。两组生成图各用 32 个从标准正态分布连续抽取的潜变量。三组只作整体外观对照，位置和类别没有一一对应关系。</p>
+      <p class="prior-note">第一组为官方测试集前 32 张照片。两个解码器各从标准正态分布连续抽取 32 个潜变量，展示全部生成图。这里按组比较外观，图像没有逐张配对。</p>
       <div class="images prior">
-        <figure><figcaption>真实 CIFAR-10 <small>测试图 #0–31</small></figcaption><img src="./samples/context-real-reference.png" id="prior-real" alt="按测试集顺序展示的 32 张原始 RGB 照片"></figure>
-        <figure><figcaption>16 × 16 × 4 <small>先验解码</small></figcaption><img id="fixed-prior16" src="./samples/context-prior16.png" alt="本轮 16 × 16 解码器的 32 张未筛选样本"><canvas id="prior16" width="256" height="128" hidden></canvas></figure>
-        <figure><figcaption>8 × 8 × 4 <small>先验解码</small></figcaption><img id="fixed-prior8" src="./samples/context-prior8.png" alt="本轮 8 × 8 解码器的 32 张未筛选样本"><canvas id="prior8" width="256" height="128" hidden></canvas></figure>
+        <figure><figcaption>真实 CIFAR-10 <small>测试图 #0–31</small></figcaption><img src="./samples/real-reference.png" id="prior-real" alt="按测试集顺序展示的 32 张真实照片"></figure>
+        <figure><figcaption>16 × 16 × 4 <small>连续先验样本</small></figcaption><img id="fixed-prior16" src="./samples/prior16.png" alt="16 × 16 解码器的 32 张未筛选样本"><canvas id="prior16" width="256" height="128" hidden></canvas></figure>
+        <figure><figcaption>8 × 8 × 4 <small>连续先验样本</small></figcaption><img id="fixed-prior8" src="./samples/prior8.png" alt="8 × 8 解码器的 32 张未筛选样本"><canvas id="prior8" width="256" height="128" hidden></canvas></figure>
       </div>
     </div>
     <p id="status" role="status" aria-live="polite">正在读取测试结果…</p>
   </section>
   <section class="measurements" aria-labelledby="measurement-heading">
-    <h2 id="measurement-heading">整套测试集的重建表现</h2>
-    <p>对官方 10,000 张测试图用后验均值重建。PSNR 和 SSIM 越高越好；细节误差比较像素相对 3 × 3 局部均值的偏差，以 0–255 的强度单位计，越低越好。</p>
-    <table><thead><tr><th scope="col">尺寸</th><th scope="col">版本</th><th scope="col">PSNR<br>（dB）↑</th><th scope="col">SSIM ↑</th><th scope="col">细节误差 ↓</th></tr></thead><tbody id="metrics"></tbody></table>
-    <p class="budget-note" id="paired-note"></p>
-    <details class="counterexamples"><summary>查看局部细节误差上升的样本</summary>
-      <p>每种尺寸按测试集顺序取第一个误差上升的样本，三列展示同一张照片。</p>
-      <img src="./samples/context-counterexamples.png" loading="lazy" alt="按测试集顺序选取的反例，逐行比较原图与两轮重建，并标注局部细节误差">
-    </details>
-    <p class="budget-note" id="budget-note"></p>
+    <h2 id="measurement-heading">10,000 张测试图的重建表现</h2>
+    <p>用每张图的后验均值重建。PSNR、SSIM 越高越好。细节误差衡量原图和重建图相对各自 3 × 3 局部均值的偏差之差，在 0–255 色阶上取平均绝对值，越小越好。</p>
+    <table><thead><tr><th scope="col">潜变量尺寸</th><th scope="col">参数量</th><th scope="col">PSNR<br>（dB）↑</th><th scope="col">SSIM ↑</th><th scope="col">细节误差 ↓</th></tr></thead><tbody id="metrics"></tbody></table>
   </section>
   <section class="measurements" aria-labelledby="report-heading">
-    <h2 id="report-heading">报告与实验文件</h2>
-    <p>修订报告比较两份原始权重的后验分布，并记录在同一训练预算下改变 8 × 8 模型 β 的结果。</p>
+    <h2 id="report-heading">报告与复现</h2>
     <ul>
-      <li><a href="./cifar-vae-current-report.pdf">查看本轮完整报告（PDF，3 页）</a></li>
-      <li><a href="./cifar-vae-context-detail.zip" download>下载本轮重建实验（代码、权重和原图对照）</a></li>
-      <li><a href="./paper-detail-note.pdf">查看上轮论文版技术简报（PDF）</a></li>
-      <li><a href="./cifar-vae-paper-detail.zip" download>下载上轮论文优化实验包</a></li>
-      <li><a href="./cifar-vae-detail.zip" download>下载 60 轮细节优化实验包</a></li>
-      <li><a href="./cifar-vae-revised.pdf">查看修订报告（PDF，3 页）</a></li>
-      <li><a href="./mini-ddpm-cifar-vae-revised.zip" download>下载新版提交包（ZIP）</a></li>
-      <li><a href="./mini-ddpm-cifar-vae.zip" download>下载原始基线提交包（ZIP）</a></li>
+      <li><a href="./report.pdf">查看实验报告（PDF，3 页）</a></li>
+      <li><a href="./submission.zip" download>下载提交包（PyTorch 代码、两份权重、评估与网页导出）</a></li>
     </ul>
   </section>
   <footer><a href="https://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10 数据集</a><span>模型推理在当前浏览器内完成</span></footer>
 </main>
-<script type="module" src="./app.js?v=context-1"></script>
+<script type="module" src="./app.js?v=best-1"></script>
 </body>
 </html>

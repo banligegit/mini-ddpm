@@ -4,21 +4,17 @@
 
 ## CIFAR-10 卷积 VAE
 
-[题目五在线实验](https://banligegit.github.io/mini-ddpm/cifar-vae/#comparison)默认展示卡车原图、上轮论文版与本轮验证集选定模型的 16×16×4 确定性重建。可以切换至 8×8×4、查看往轮版本，或同版对照两种尺寸。点击原图可移动三列同步的 12×12 像素放大框。样例按类别取官方测试集首张。表中指标是 10,000 张测试图的均值。
+[原图与重建](https://banligegit.github.io/mini-ddpm/cifar-vae/#comparison)在同一行展示真实照片和两种潜变量尺寸的确定性重建。每种尺寸使用验证集选定的一份权重。十个样例各取一类在官方测试集中的首张照片。点击原图可移动三列同步的 12×12 像素放大框。指标统计涵盖官方测试集全部 10,000 张图。
 
-[先验页](https://banligegit.github.io/mini-ddpm/cifar-vae/#priors)把真实测试集前 32 张照片与两个解码器各自连续 32 张先验样本并排展示，图像之间没有源图对应关系。默认网格来自正式实验的 PyTorch 固定种子。网页可选择四个版本的解码器，用浏览器随机种子另抽一批样本。重建与先验解码均使用 ONNX Runtime Web 的 WASM 后端。
+[先验生成](https://banligegit.github.io/mini-ddpm/cifar-vae/#priors)并排展示测试集前 32 张照片和两个解码器各自的连续 32 个样本。每组生成图都来自标准正态潜变量，与参考照片没有逐张对应关系。默认图片取自正式评估。改变网页种子可用 ONNX Runtime Web 的 WASM 后端在浏览器另行抽样。
 
-从页面下载实验提交包。解压后在包含 `model.py` 的目录安装 `onnx`、`onnxruntime` 及提交包中的依赖，执行下列命令可更新本仓库的网页模型、测试图和指标；将路径参数替换为实际检出位置。重新导出前，数据目录应已有官方 CIFAR-10，或可联网首次下载。
+[实验报告](https://banligegit.github.io/mini-ddpm/cifar-vae/report.pdf)与[提交包](https://banligegit.github.io/mini-ddpm/cifar-vae/submission.zip)提供选型记录、训练与评估代码及两份权重。在提交包的项目根目录安装其中的依赖，以及 `onnx`、`onnxruntime`，按包内说明准备 CIFAR-10，然后运行以下命令。将最后一个参数替换成本仓库的实际路径。
 
 ```sh
-python export_web.py --output /path/to/mini-ddpm/site/cifar-vae
+python gated_detail/export_best_web.py --output /path/to/mini-ddpm/site/cifar-vae
 ```
 
-从页面下载细节优化实验包，将其中的 `detail/` 放在上述训练项目根目录。导出优化版需先保留原版 JSON 和原图，再运行 `python detail/export_detail_web.py --output /path/to/mini-ddpm/site/cifar-vae`。导出脚本核验选定权重的 SHA-256，并将 ONNX 数值与 PyTorch 输出对照。
-
-上轮论文版的导出脚本随论文优化包提供。解压后，在项目根目录运行 `python paper_detail/export_web_paper.py --output /path/to/mini-ddpm/site/cifar-vae`。本轮实验包对应的命令为 `python context_detail/export_context_web.py --output /path/to/mini-ddpm/site/cifar-vae`。脚本校验验证集锁定的权重、正式测试记录和示例原图，并核对十张示例的 ONNX 与 PyTorch 重建误差。网页仓库保留四个版本、两种尺寸的全部模型。
-
-从本仓库根目录运行 `npx --yes http-server site -p 8080`，打开 `http://localhost:8080/cifar-vae/`。安装 Chrome、NumPy、Pillow 和 Python Playwright 后，`python cifar_vae/verify_browser.py http://localhost:8080/cifar-vae/` 可核对十张样例、同种子复现和移动布局。
+导出器检查验证集选定权重及官方测试记录的 SHA-256，生成四个 ONNX 文件、模型指标、十组原图与重建图、三个先验页网格，并核验 ONNX 与 PyTorch 的编码、解码及整条重建路径。在本仓库根目录运行 `npx --yes http-server site -p 8080` 后打开 `http://localhost:8080/cifar-vae/`。安装 Chrome、NumPy、Pillow 和 Python Playwright 后，运行 `python cifar_vae/verify_browser.py http://localhost:8080/cifar-vae/` 可核对四个模型、十组重建、固定种子、网页入口与移动布局。
 
 ## MNIST 手写数字生成器
 

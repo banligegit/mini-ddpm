@@ -4,4 +4,5 @@ __pycache__/
 pages_admin.py
 qa-*.png
 *.zip
+!site/cifar-vae/submission.zip
 site/vendor/*jsep*

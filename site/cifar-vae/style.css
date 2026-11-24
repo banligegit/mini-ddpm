@@ -41,11 +41,6 @@ figcaption small { display:block; color:var(--quiet); font-size:14px; font-weigh
 #status { min-height:2.4em; padding-top:12px; color:var(--quiet); font-size:14px; }
 .measurements { border-top:1px solid var(--line); margin-top:30px; padding-top:24px; }
 table { width:100%; border-collapse:collapse; margin-top:14px; font-variant-numeric:tabular-nums; }
-.budget-note { margin-top:10px; font-size:14px; }
-.counterexamples { margin:12px 0; }
-.counterexamples summary { cursor:pointer; color:var(--green); }
-.counterexamples p { margin:8px 0; font-size:14px; }
-.counterexamples img { display:block; max-width:100%; height:auto; }
 td,th { text-align:right; padding:10px 4px; border-bottom:1px solid var(--line); }
 td:first-child,th:first-child { text-align:left; }
 footer { margin-top:30px; font-size:14px; }
@@ -60,6 +55,5 @@ footer { margin-top:30px; font-size:14px; }
   figcaption small { font-size:12px; }
   td,th { font-size:14px; }
   .crops canvas { aspect-ratio:1.2; }
-  #latent-size { width:11.1rem; }
   #sample { width:8rem; }
 }
