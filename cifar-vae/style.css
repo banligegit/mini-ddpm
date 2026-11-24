@@ -14,6 +14,8 @@ button { cursor:pointer; }
 button:disabled { cursor:wait; opacity:.6; }
 .mode-switch button { border:0; padding:8px 16px; border-radius:4px; background:transparent; color:var(--ink); }
 .mode-switch button[aria-pressed=true] { background:var(--ink); color:white; }
+.mode-switch { max-width:100%; flex-wrap:wrap; }
+.mode-switch .learned-link { align-self:center; padding:7px 12px; font-size:15px; }
 form { display:flex; gap:14px; align-items:end; flex-wrap:wrap; margin:22px 0; }
 label { display:grid; gap:5px; font-size:14px; }
 input,select,.action { padding:9px 15px; border:1px solid var(--line); border-radius:5px; min-height:42px; }
