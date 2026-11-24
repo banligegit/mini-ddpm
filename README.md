@@ -8,6 +8,8 @@
 
 [先验生成](https://banligegit.github.io/mini-ddpm/cifar-vae/#priors)并排展示测试集前 32 张照片和两个解码器各自的连续 32 个样本。每组生成图都来自标准正态潜变量，与参考照片没有逐张对应关系。默认图片取自正式评估。改变网页种子可用 ONNX Runtime Web 的 WASM 后端在浏览器另行抽样。
 
+[学习先验（拓展）](https://banligegit.github.io/mini-ddpm/cifar-vae/learned-prior/)用同一份 30,000 步 EMA 潜空间扩散权重生成无条件或指定 CIFAR 类别的图片，60 次确定性 DDIM 更新后复用 8 × 8 VAE 解码器。页面展示两组未筛选固定样本，并可在浏览器实际运行单图生成。[导出与浏览器对齐说明](cifar_vae/learned_prior/README.md)
+
 [实验报告](https://banligegit.github.io/mini-ddpm/cifar-vae/report.pdf)与[提交包](https://banligegit.github.io/mini-ddpm/cifar-vae/submission.zip)提供选型记录、训练与评估代码及两份权重。在提交包的项目根目录安装其中的依赖，以及 `onnx`、`onnxruntime`，按包内说明准备 CIFAR-10，然后运行以下命令。将最后一个参数替换成本仓库的实际路径。
 
 ```sh

@@ -1,0 +1,7 @@
+.showcase { margin-top:28px; }
+.showcase p { color:var(--quiet); margin-bottom:12px; }
+.showcase .grid-key { margin-top:12px; font-size:14px; }
+#result { width:min(100%,220px); margin-top:8px; }
+#result canvas { image-rendering:pixelated; }
+#timing { margin-top:8px; font-size:14px; }
+progress { width:min(100%,420px); accent-color:var(--green); }
