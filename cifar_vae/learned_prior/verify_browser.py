@@ -17,10 +17,10 @@ def main():
         page.on("pageerror",lambda e: errors.append(str(e)))
         response=page.goto(args.url,wait_until="domcontentloaded")
         assert response.ok
-        assert page.locator("#target option").count()==11
+        assert page.locator("#target option").count()==12
         for image in page.locator(".showcase img").all(): image.evaluate("el=>el.decode()")
         result=page.evaluate("""async () => {
-          const {loadModels,predict,sample,draw}=await import('./engine.js');
+          const {loadModels,predict,sample,draw}=await import('./engine.js?v=class-draw');
           const models=await loadModels(), config=models.config;
           async function fixture(name) {
             const r=await fetch('./fixture/'+name+'.f32');
@@ -53,7 +53,8 @@ def main():
             assert max(result[mode][k]["max"] for k in ("v","z","rgb"))<3e-4, result
             assert result[mode]["max_byte"]<=1, result
         frames=[]
-        for target,seed in ((-1,2026),(7,2026),(7,2026),(7,2027)):
+        picked=page.evaluate("async()=>{const m=await import('./engine.js?v=class-draw');return m.randomClass(2026)}")
+        for target,seed in ((-1,2026),(7,2026),(7,2026),(7,2027),("draw",2026),(picked,2026)):
             page.select_option("#target",str(target))
             page.fill("#seed",str(seed))
             page.locator("#gen-form button").click()
@@ -61,7 +62,9 @@ def main():
             assert "完成" in page.locator("#status").inner_text(),page.locator("#status").inner_text()
             assert page.locator("#result").is_visible() and page.locator("#progress").get_attribute("value")=="60"
             frames.append(page.locator("#canvas").evaluate("c=>c.toDataURL()"))
+            if target=="draw": assert "抽中 "+str(picked)+" ·" in page.locator("#caption").inner_text()
         assert frames[0]!=frames[1]==frames[2]!=frames[3]
+        assert frames[4]==frames[5]
         result["last_ui_timing"]=page.locator("#timing").inner_text()
         page.set_viewport_size({"width":360,"height":800})
         assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
@@ -73,7 +76,7 @@ def main():
         page.locator("#choose-prior").click()
         assert page.locator("#fixed-prior8").is_visible()
         assert not errors, errors
-        result.update(browser=browser.version,url=args.url,seed_repeat=True,seed_change=True,condition_change=True)
+        result.update(browser=browser.version,url=args.url,seed_repeat=True,seed_change=True,condition_change=True,seeded_class_draw=picked)
         print(json.dumps(result,ensure_ascii=False),flush=True)
         browser.close()
 
