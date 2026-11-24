@@ -37,6 +37,19 @@ export function noise(seed) {
   return values;
 }
 
+export function randomClass(seed) {
+  // A domain-separated stream leaves the image-noise stream and draw count unchanged.
+  let state = (seed ^ 0x952616ad) >>> 0;
+  let word;
+  do {
+    state = (state + 0x9e3779b9) >>> 0;
+    word = Math.imul(state ^ (state >>> 16), 0x21f0aaad);
+    word = Math.imul(word ^ (word >>> 15), 0x735a2d97);
+    word = (word ^ (word >>> 15)) >>> 0;
+  } while (word >= 4294967290);
+  return word % 10;
+}
+
 export async function predict(models, x, t, label) {
   const {ort, prior} = models;
   const feeds = {

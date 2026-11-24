@@ -1,9 +1,10 @@
-import {draw,loadModels,noise,sample} from './engine.js';
+import {draw,loadModels,noise,randomClass,sample} from './engine.js?v=class-draw';
 const get = id => document.getElementById(id);
 get('gen-form').addEventListener('submit', async event => {
   event.preventDefault();
   const controls = [...event.currentTarget.elements];
-  const target = Number(get('target').value), seed = Number(get('seed').value);
+  const choice = get('target').value, seed = Number(get('seed').value);
+  const target = choice==='draw'? randomClass(seed) : Number(choice);
   controls.forEach(el => { el.disabled=true; });
   get('progress').value=0; get('result').hidden=true; get('timing').textContent='';
   get('status').textContent='正在准备扩散模型和 VAE 解码器…';
@@ -19,7 +20,8 @@ get('gen-form').addEventListener('submit', async event => {
     });
     draw(get('canvas'),rgb);
     get('result').hidden=false;
-    get('caption').textContent=get('target').selectedOptions[0].textContent+' · 种子 '+seed;
+    const label = choice==='draw' ? '抽中 '+get('target').querySelector('option[value="'+target+'"]').textContent : get('target').selectedOptions[0].textContent;
+    get('caption').textContent=label+' · 种子 '+seed;
     get('timing').textContent='首次模型加载 '+(models.loadMs/1000).toFixed(2)+' 秒 · 本次生成 '+((performance.now()-begin)/1000).toFixed(2)+' 秒';
     get('status').textContent='浏览器生成完成。';
   } catch (error) {
