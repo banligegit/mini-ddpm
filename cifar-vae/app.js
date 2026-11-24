@@ -3,14 +3,7 @@ const sides = [16, 8];
 const sessions = new Map();
 let catalog, runtime, busy = false;
 let priorStatus = '实验记录使用 PyTorch 种子 2026。点击生成可用浏览器的随机数生成器重新抽样，同一浏览器种子可复现。';
-const slots = ['baseline', 'optimized'];
-const photos = ['original', ...slots];
-const models = {
-  baseline: {label: '首版', prefix: '', image: 'recon'},
-  optimized: {label: '60 轮版', prefix: 'detail-', image: 'detail'},
-  paper: {label: '论文版', prefix: 'paper-', image: 'paper'},
-  context: {label: '本轮', prefix: 'context-', image: 'context'},
-};
+const photos = ['original', 'recon16', 'recon8'];
 const cropSize = 12;
 let cropX = 10, cropY = 10;
 
@@ -23,12 +16,13 @@ async function loadRuntime() {
   return runtime;
 }
 
-async function session(side, part, version = 'baseline') {
-  const key = models[version].prefix + part + side;
+async function session(side, part) {
+  const key = 'best-' + part + side;
   if (!sessions.has(key)) {
     const ort = await loadRuntime();
-    const url = new URL('./models/' + key + '.onnx', import.meta.url).href;
-    sessions.set(key, await ort.InferenceSession.create(url, {executionProviders: ['wasm']}));
+    const url = new URL('./models/' + key + '.onnx', import.meta.url);
+    url.searchParams.set('v', catalog.models[side].checkpoint_sha256.slice(0, 12));
+    sessions.set(key, await ort.InferenceSession.create(url.href, {executionProviders: ['wasm']}));
   }
   return sessions.get(key);
 }
@@ -64,19 +58,6 @@ function rgbImage(chw) {
 
 function chosen() { return catalog.samples[get('sample').selectedIndex]; }
 
-function comparisons() {
-  const mode = get('latent-size').value;
-  if (mode.startsWith('both-')) {
-    const version = mode.slice(5);
-    return sides.map(side => ({side, version, label: side + ' × ' + side}));
-  }
-  const [key, size] = mode.split('-');
-  const side = Number(size || key);
-  const pairs = {paper: ['optimized', 'paper'], context: ['paper', 'context']};
-  const pair = pairs[key] || ['baseline', 'optimized'];
-  return pair.map(version => ({side, version, label: models[version].label}));
-}
-
 function updateZoom(id) {
   const source = get(id);
   const canvas = get('zoom-' + id);
@@ -108,13 +89,8 @@ function showExample() {
   const sample = chosen();
   const path = './samples/' + sample.index + '-';
   get('original').src = path + 'original.png';
-  comparisons().forEach(({side, version, label}, i) => {
-    const id = slots[i];
-    get(id).src = path + models[version].image + side + '.png';
-    get(id).alt = label + '的后验均值重建';
-    get('label-' + id).textContent = label + '重建';
-    get('crop-label-' + id).textContent = label + '局部';
-    get('zoom-' + id).setAttribute('aria-label', label + '局部放大');
+  sides.forEach(side => {
+    get('recon' + side).src = path + 'best' + side + '.png?v=' + catalog.models[side].checkpoint_sha256.slice(0, 12);
   });
   photos.forEach(updateZoom);
   get('status').textContent = '测试集第 ' + sample.index + ' 号图像。当前展示两份权重在 Python 中的重建。';
@@ -151,28 +127,27 @@ async function reconstruct() {
   const ort = await loadRuntime();
   const x = new ort.Tensor('float32', numbers, [1,3,32,32]);
   const previews = [];
-  for (const {side, version} of comparisons()) {
-    const encoder = await session(side, 'encoder', version);
-    const decoder = await session(side, 'decoder', version);
+  for (const side of sides) {
+    const encoder = await session(side, 'encoder');
+    const decoder = await session(side, 'decoder');
     const {mu} = await encoder.run({x});
     const {rgb} = await decoder.run({z:mu});
     ctx.putImageData(rgbImage(rgb.data), 0, 0);
     previews.push(work.toDataURL('image/png'));
   }
-  slots.forEach((slot,i) => { get(slot).src = previews[i]; });
-  await Promise.all(slots.map(id => get(id).decode()));
-  slots.forEach(updateZoom);
+  sides.forEach((side,i) => { get('recon' + side).src = previews[i]; });
+  await Promise.all(sides.map(side => get('recon' + side).decode()));
+  sides.forEach(side => updateZoom('recon' + side));
   get('status').textContent = '浏览器重建完成。两份模型分别编码同一张原图，再解码各自的后验均值。';
 }
 
 async function generate() {
   const seed = Number(get('seed').value);
-  const version = get('prior-version').value;
   const ort = await loadRuntime();
   const grids = [];
   for (const side of sides) {
-    get('status').textContent = '正在用' + models[version].label + ' ' + side + ' × ' + side + ' 解码器生成 32 张图…';
-    const decoder = await session(side, 'decoder', version);
+    get('status').textContent = '正在用 ' + side + ' × ' + side + ' 解码器生成 32 张图…';
+    const decoder = await session(side, 'decoder');
     const normal = makeNormal(seed);
     const grid = document.createElement('canvas');
     grid.width = 256;
@@ -190,9 +165,9 @@ async function generate() {
     canvas.getContext('2d').drawImage(grids[i], 0, 0);
     canvas.hidden = false;
     get('fixed-prior' + side).hidden = true;
-    canvas.setAttribute('aria-label', models[version].label + ' ' + side + ' × ' + side + ' 解码器生成的 32 张未筛选图像');
+    canvas.setAttribute('aria-label', side + ' × ' + side + ' 解码器生成的 32 张未筛选图像');
   });
-  priorStatus = '种子 ' + seed + '，' + models[version].label + '解码器在本地浏览器生成，每组连续 32 张。';
+  priorStatus = '种子 ' + seed + '，浏览器已用两份解码器各生成连续 32 张图像。';
   get('status').textContent = priorStatus;
 }
 
@@ -209,31 +184,21 @@ function switchMode(prior) {
 }
 
 async function init() {
-  const documents = await Promise.all(['results.json', 'detail-results.json', 'paper-results.json', 'context-results.json'].map(async name => {
-    const res = await fetch('./' + name);
-    if (!res.ok) throw Error('无法读取测试结果（HTTP ' + res.status + '）。');
-    return res.json();
-  }));
-  const [samples, detail, paper, current] = documents;
-  catalog = samples;
-  const metrics = Object.fromEntries(sides.map(side => [side, {...detail.models[side], paper: paper.models[side], context: current.models[side]}]));
-  get('budget-note').textContent = current.training_note;
-  const paired = sides.map(side => side + ' × ' + side + ' 有 ' + current.models[side].lower_detail_error_count.toLocaleString('zh-CN') + ' 张');
-  get('paired-note').textContent = '逐张与上轮论文版对照，10,000 张测试图中，' + paired.join('，') + '的局部细节误差下降。';
+  const res = await fetch('./best-results.json', {cache:'no-cache'});
+  if (!res.ok) throw Error('无法读取测试结果（HTTP ' + res.status + '）。');
+  catalog = await res.json();
   for (const s of catalog.samples) get('sample').add(new Option(s.name + ' · #' + s.index, s.index));
   get('sample').value = '11';
-  for (const side of [8, 16]) {
-    for (const [version, spec] of Object.entries(models)) {
-      const m = metrics[side][version], tr = get('metrics').insertRow();
-      for (const text of [side + ' × ' + side, spec.label,
-                          m.psnr.toFixed(2), m.ssim.toFixed(4), m.local_detail_mae.toFixed(2)]) {
-        tr.insertCell().textContent = text;
-      }
+  for (const side of sides) {
+    const m = catalog.models[side], tr = get('metrics').insertRow();
+    for (const text of [side + ' × ' + side + ' × 4', m.parameters.toLocaleString('zh-CN'),
+                        m.psnr.toFixed(2), m.ssim.toFixed(4), m.local_detail_mae.toFixed(2)]) {
+      tr.insertCell().textContent = text;
     }
+    get('fixed-prior' + side).src = './samples/prior' + side + '.png?v=' + m.checkpoint_sha256.slice(0, 12);
   }
   photos.forEach(id => get(id).addEventListener('load', () => updateZoom(id)));
   get('sample').addEventListener('change', () => { showExample(); defaultCrop(); });
-  get('latent-size').addEventListener('change', showExample);
   get('crop-source').addEventListener('click', event => {
     if (event.detail === 0) return;
     const rect = event.currentTarget.getBoundingClientRect();
@@ -249,12 +214,6 @@ async function init() {
   });
   get('recon-form').addEventListener('submit', e => { e.preventDefault(); run(reconstruct); });
   get('prior-form').addEventListener('submit', e => { e.preventDefault(); run(generate); });
-  get('prior-version').addEventListener('change', () => {
-    sides.forEach(side => { get('prior' + side).hidden = true; get('fixed-prior' + side).hidden = true; });
-    priorStatus = '点击生成，查看所选解码器的先验样本。';
-    if (get('prior-form').reportValidity()) run(generate);
-    else get('status').textContent = priorStatus;
-  });
   get('choose-recon').addEventListener('click', () => switchMode(false));
   get('choose-prior').addEventListener('click', () => switchMode(true));
   showExample();
