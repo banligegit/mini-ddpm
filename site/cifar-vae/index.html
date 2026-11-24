@@ -65,7 +65,7 @@
     <h2 id="measurement-heading">10,000 张测试图的重建表现</h2>
     <p>用每张图的后验均值重建。PSNR、SSIM 越高越好。细节误差衡量原图和重建图相对各自 3 × 3 局部均值的偏差之差，在 0–255 色阶上取平均绝对值，越小越好。</p>
     <table><thead><tr><th scope="col">潜变量尺寸</th><th scope="col">参数量</th><th scope="col">PSNR<br>（dB）↑</th><th scope="col">SSIM ↑</th><th scope="col">细节误差 ↓</th></tr></thead><tbody id="metrics"></tbody></table>
-    <p><strong>题目五选定本轮的 8 × 8 × 4 VAE，供题目六使用。</strong>每张图有 64 个空间位置、共 256 个潜变量，比 16 × 16 × 4 少 75%。16 × 16 × 4 用作本题的高保真重建对照。</p>
+    <p><strong>题目五选定本轮的 16 × 16 × 4 VAE，供题目六使用。</strong>在同一批 10,000 张测试图上，16 × 16 的每张图都有更低的细节误差，车窗细线也更接近原图。每张图用 1,024 个潜变量保留这些细节；8 × 8 的压缩对照每张用 256 个。</p>
   </section>
   <section class="measurements" aria-labelledby="report-heading">
     <h2 id="report-heading">报告与复现</h2>
