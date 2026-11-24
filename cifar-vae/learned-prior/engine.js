@@ -11,7 +11,7 @@ async function createModels() {
   ort.env.wasm.wasmPaths = here('../../vendor/').href;
   const options = {executionProviders: ['wasm']};
   const prior = await ort.InferenceSession.create(here('velocity.onnx?v=' + config.onnx_sha256.slice(0,12)).href, options);
-  const decoder = await ort.InferenceSession.create(here('../models/best-decoder8.onnx?v=' + config.decoder_checkpoint_sha256.slice(0,12)).href, options);
+  const decoder = await ort.InferenceSession.create(here(config.decoder_path + '?v=' + config.decoder_onnx_sha256.slice(0,12)).href, options);
   return {ort, prior, decoder, config, loadMs: performance.now()-begin};
 }
 

@@ -12,7 +12,7 @@
   <header>
     <nav aria-label="项目导航"><a href="../">手写数字生成器</a><a href="https://github.com/banligegit/mini-ddpm/tree/main/site/cifar-vae">网页源码</a></nav>
     <h1>CIFAR-10 原图与重建</h1>
-    <p>同一张 32 × 32 彩色照片，分别压缩到 16 × 16 × 4 和 8 × 8 × 4，再用解码器还原。每种尺寸展示验证集选中的模型。</p>
+    <p>同一张 32 × 32 彩色照片，分别压缩到 16 × 16 × 4 和 8 × 8 × 4，再用解码器还原。两种尺寸都采用验证集选中的编码器，在输出潜变量前用共享卷积修正三次后验均值。</p>
   </header>
   <section aria-label="交互实验">
     <div class="mode-switch" id="priors" role="group" aria-label="实验模式">

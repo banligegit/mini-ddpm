@@ -44,24 +44,24 @@
   "test_image_count": 10000,
   "models": {
     "16": {
-      "psnr": 35.04418266963959,
-      "ssim": 0.9785932767808437,
-      "local_detail_mae": 2.6122998708963396,
-      "parameters": 156047,
-      "checkpoint_sha256": "024bc8701dfa637fe1a350e675a250f8251cfde6bfbd7efef9ad9838467390ab",
-      "encoder_max_abs": 5.990266799926758e-06,
+      "psnr": 38.16335403556824,
+      "ssim": 0.9888912732481957,
+      "local_detail_mae": 1.848833972376585,
+      "parameters": 505159,
+      "checkpoint_sha256": "0ebb7aa8f6cc862798ecfea6f9bfc88614c73f9f928fc8e32e02b8d6b0fb5b87",
+      "encoder_max_abs": 3.4570693969726562e-06,
       "decoder_max_abs": 1.7881393432617188e-07,
-      "ten_image_rgb_max_abs": 4.76837158203125e-07
+      "ten_image_rgb_max_abs": 2.980232238769531e-07
     },
     "8": {
-      "psnr": 27.04122435359955,
-      "ssim": 0.8812925994455815,
-      "local_detail_mae": 6.71472750493288,
-      "parameters": 209651,
-      "checkpoint_sha256": "3477744ad62e665ea3db265f0108553d919a691f308c75db55bc8b991d231862",
-      "encoder_max_abs": 2.771615982055664e-06,
+      "psnr": 27.61759201602936,
+      "ssim": 0.8913058626174927,
+      "local_detail_mae": 6.454199365466833,
+      "parameters": 748179,
+      "checkpoint_sha256": "41bf5b19e83c2b2849cb799ddfa71c2029c9ca9b09c37c1a85a8cf0fe404001f",
+      "encoder_max_abs": 1.7881393432617188e-06,
       "decoder_max_abs": 1.7881393432617188e-07,
-      "ten_image_rgb_max_abs": 4.76837158203125e-07
+      "ten_image_rgb_max_abs": 3.5762786865234375e-07
     }
   },
   "prior": {

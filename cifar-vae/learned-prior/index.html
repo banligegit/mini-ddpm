@@ -7,7 +7,7 @@
   <header>
     <nav aria-label="项目导航"><a href="../">原图与 VAE 重建</a><a href="../#priors">标准正态直接解码</a></nav>
     <h1>学习先验（拓展）</h1>
-    <p>潜空间扩散模型从随机噪声出发，经过 60 步 DDIM 生成一份 8 × 8 × 4 潜变量，再由题五的 VAE 解码成彩色图像。</p>
+    <p>潜空间扩散模型从随机噪声出发，经过 60 步 DDIM 生成一份 8 × 8 × 4 潜变量，再由扩散训练时固定的 VAE 解码器还原为彩色图像。</p>
   </header>
   <section class="showcase" aria-labelledby="fixed-title">
     <h2 id="fixed-title">固定种子对照</h2>
@@ -33,4 +33,4 @@
     <p id="timing"></p>
   </section>
   <footer><a href="https://github.com/banligegit/mini-ddpm/tree/main/cifar_vae/learned_prior">导出与对齐说明</a><span>同一份 30,000 次更新的 EMA 权重</span></footer>
-</main><script type="module" src="app.js?v=class-draw"></script></body></html>
+</main><script type="module" src="app.js?v=frozen-decoder"></script></body></html>
