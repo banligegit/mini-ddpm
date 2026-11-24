@@ -8,12 +8,12 @@
 
 [先验生成](https://banligegit.github.io/mini-ddpm/cifar-vae/#priors)并排展示测试集前 32 张照片和两个解码器各自的连续 32 个样本。每组生成图都来自标准正态潜变量，与参考照片没有逐张对应关系。默认图片取自正式评估。改变网页种子可用 ONNX Runtime Web 的 WASM 后端在浏览器另行抽样。
 
-[学习先验（拓展）](https://banligegit.github.io/mini-ddpm/cifar-vae/learned-prior/)用同一份 30,000 步 EMA 潜空间扩散权重生成无条件或指定 CIFAR 类别的图片，60 次确定性 DDIM 更新后复用 8 × 8 VAE 解码器。页面展示两组未筛选固定样本，并可在浏览器实际运行单图生成。[导出与浏览器对齐说明](cifar_vae/learned_prior/README.md)
+[学习先验（拓展）](https://banligegit.github.io/mini-ddpm/cifar-vae/learned-prior/)用同一份 30,000 步 EMA 潜空间扩散权重生成无条件或指定 CIFAR 类别的图片，60 次确定性 DDIM 更新后使用扩散训练时固定的 8 × 8 VAE 解码器。页面展示两组未筛选固定样本，并可在浏览器实际运行单图生成。[导出与浏览器对齐说明](cifar_vae/learned_prior/README.md)
 
 [实验报告](https://banligegit.github.io/mini-ddpm/cifar-vae/report.pdf)与[提交包](https://banligegit.github.io/mini-ddpm/cifar-vae/submission.zip)提供选型记录、训练与评估代码及两份权重。在提交包的项目根目录安装其中的依赖，以及 `onnx`、`onnxruntime`，按包内说明准备 CIFAR-10，然后运行以下命令。将最后一个参数替换成本仓库的实际路径。
 
 ```sh
-python gated_detail/export_best_web.py --output /path/to/mini-ddpm/site/cifar-vae
+python reconstruction_next/export_web.py --output /path/to/mini-ddpm/site/cifar-vae
 ```
 
 导出器检查验证集选定权重及官方测试记录的 SHA-256，生成四个 ONNX 文件、模型指标、十组原图与重建图、三个先验页网格，并核验 ONNX 与 PyTorch 的编码、解码及整条重建路径。在本仓库根目录运行 `npx --yes http-server site -p 8080` 后打开 `http://localhost:8080/cifar-vae/`。安装 Chrome、NumPy、Pillow 和 Python Playwright 后，运行 `python cifar_vae/verify_browser.py http://localhost:8080/cifar-vae/` 可核对四个模型、十组重建、固定种子、网页入口与移动布局。

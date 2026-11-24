@@ -20,7 +20,7 @@ def main():
         assert page.locator("#target option").count()==12
         for image in page.locator(".showcase img").all(): image.evaluate("el=>el.decode()")
         result=page.evaluate("""async () => {
-          const {loadModels,predict,sample,draw}=await import('./engine.js?v=class-draw');
+          const {loadModels,predict,sample,draw}=await import('./engine.js?v=frozen-decoder');
           const models=await loadModels(), config=models.config;
           async function fixture(name) {
             const r=await fetch('./fixture/'+name+'.f32');
@@ -53,7 +53,7 @@ def main():
             assert max(result[mode][k]["max"] for k in ("v","z","rgb"))<3e-4, result
             assert result[mode]["max_byte"]<=1, result
         frames=[]
-        picked=page.evaluate("async()=>{const m=await import('./engine.js?v=class-draw');return m.randomClass(2026)}")
+        picked=page.evaluate("async()=>{const m=await import('./engine.js?v=frozen-decoder');return m.randomClass(2026)}")
         for target,seed in ((-1,2026),(7,2026),(7,2026),(7,2027),("draw",2026),(picked,2026)):
             page.select_option("#target",str(target))
             page.fill("#seed",str(seed))

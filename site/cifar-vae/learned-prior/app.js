@@ -1,4 +1,4 @@
-import {draw,loadModels,noise,randomClass,sample} from './engine.js?v=class-draw';
+import {draw,loadModels,noise,randomClass,sample} from './engine.js?v=frozen-decoder';
 const get = id => document.getElementById(id);
 get('gen-form').addEventListener('submit', async event => {
   event.preventDefault();

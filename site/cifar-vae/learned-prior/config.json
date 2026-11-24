@@ -4,6 +4,7 @@
   "onnx_sha256": "d0379a08041157c954f63af3fdbdb7ccbb71b99cd773673f49db5aa370d32024",
   "decoder_checkpoint_sha256": "3477744ad62e665ea3db265f0108553d919a691f308c75db55bc8b991d231862",
   "decoder_onnx_sha256": "15a1d96d446267f17a827d9489367de75907e81a57d7c55e50c504052b375f3f",
+  "decoder_path": "frozen-decoder8.onnx",
   "steps": 60,
   "guidance": 6.0,
   "null_label": 10,

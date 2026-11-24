@@ -55,8 +55,6 @@ def main():
     settings=json.loads((ext/"settings.json").read_text("utf8"))
     if settings["channels"]!=channels or settings["vae_sha256"]!=VAE_SHA:
         raise ValueError("Mismatched training normalization")
-    web_vae=json.loads((args.site/"best-results.json").read_text("utf8"))
-    if web_vae["models"]["8"]["checkpoint_sha256"]!=VAE_SHA: raise ValueError("Unmatched site decoder")
     torch.set_num_threads(3)
     model=LatentUNet().eval()
     saved=torch.load(ck,map_location="cpu",weights_only=True)
@@ -65,6 +63,11 @@ def main():
     vae=load_gated_model(vae_path,"cpu").eval()
     site=args.site/"learned-prior";fixture=site/"fixture"
     fixture.mkdir(parents=True,exist_ok=True)
+    # The prior was trained on one particular VAE. Later reconstruction exports may use another.
+    from export_web import Decoder, checked_export
+    decoder = site / "frozen-decoder8.onnx"
+    decoder_input = torch.randn((1, 4, 8, 8), generator=torch.Generator().manual_seed(2026))
+    checked_export(Decoder(vae), decoder_input, decoder, "z", "rgb")
     init=torch.randn(1,4,8,8,generator=torch.Generator().manual_seed(43001))
     ts=torch.linspace(1.,0.,STEPS+1)
     a=(ts*(np.pi/2)).cos();s=(ts*(np.pi/2)).sin()
@@ -74,7 +77,6 @@ def main():
                       input_names=["x","t","label"],output_names=["v"])
     options=ort.SessionOptions(); options.intra_op_num_threads=2
     engine=ort.InferenceSession(str(graph),options,providers=["CPUExecutionProvider"])
-    decoder=args.site/"models/best-decoder8.onnx"
     rgb_engine=ort.InferenceSession(str(decoder),options,providers=["CPUExecutionProvider"])
     def save(name,x):
         x.detach().numpy().astype("<f4").tofile(fixture/(name+".f32"))
@@ -113,6 +115,7 @@ def main():
         save_grid(ext/"final"/mode/"seed-2026.npz",site/(mode+".png"),mode,guidance)
     record=dict(ema_update=30000,checkpoint_sha256=PRIOR_SHA,onnx_sha256=digest(graph),
                 decoder_checkpoint_sha256=VAE_SHA,decoder_onnx_sha256=digest(decoder),
+                decoder_path=decoder.name,
                 steps=STEPS,guidance=guidance,null_label=10,t=ts.tolist(),alpha=a.tolist(),sigma=s.tolist(),
                 mean=mu.flatten().tolist(),std=std.flatten().tolist(),fixture_seed=43001,fixture_class=7,
                 input_shape=[1,4,8,8],input_types={"x":"float32","t":"float32","label":"int64"},
